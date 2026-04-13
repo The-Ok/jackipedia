@@ -1,45 +1,145 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Jackipedia</title>
-        <!-- 8443366655.4328 -->
-        <link rel="icon" type="image/png" href="articles/Logo.png">
-    </head>
-    <body>
-        <img src="articles/Logo.png"><p>Welcome to Jackipedia, The ultimate encyclopedia for anything <a href="https://www.youtube.com/@JackSucksAtLife">JackSucksAtLife</a> related</p>
-        <br>
-        <br>
-        <h3>New articles</h3>
-        <a href="https://the-ok.github.io/jackipedia/articles/rjsal.html">r/JackSucksAtLife</a><br>
-        <a href="https://the-ok.github.io/jackipedia/articles/straightboy.html">u/StraightBoy69420</a><br>
-        <a href="https://the-ok.github.io/jackipedia/articles/jackandoscar.html">Jack & Oscar</a><br>
-        <br>
-        <h3>All Articles (alphabetical order)</h3>
-        <a href="https://the-ok.github.io/jackipedia/articles/jackandoscar.html">Jack & Oscar</a><br>
-        <a href="https://the-ok.github.io/jackipedia/articles/jackmasseywelsh.html">Jack Massey Welsh</a><br>
-        <a href="https://the-ok.github.io/jackipedia/articles/jackmw.html">JackMW</a><br>
-        <a href="https://the-ok.github.io/jackipedia/articles/jacksucksatgeography.html">JackSucksAtGeography</a><br>
-        <a href="https://the-ok.github.io/jackipedia/articles/jacksucksatlife.html">JackSucksAtLife</a><br>
-        <a href="https://the-ok.github.io/jackipedia/articles/jacksucksatstuff.html">JackSucksAtStuff</a><br>
-        <a href="https://the-ok.github.io/jackipedia/articles/rjsal.html">r/JackSucksAtLife</a><br>
-        <a href="https://the-ok.github.io/jackipedia/articles/straightboy.html">u/StraightBoy69420</a><br>
-        <br>
-        <button onclick="window.location.href='https://forms.gle/cVL9boDyKLyBcDH7A'" hidden>Article submissions are now open, click here to submit an article</button>
-        <br>
-        <br>
-        <br>
-        <p>ver. beta 0.4 or something like that</p>
-        <p>made by <a href="https://www.reddit.com/u/theok8234">u/theok8234</a></p>
-    </body>
+<head>
+    <title>Jackipedia</title>
+    <link rel="icon" type="image/png" href="articles/Logo.png">
+    <style>
+        body {
+            margin: 0;
+            font-family: "Linux Libertine", "Georgia", "Times New Roman", serif;
+            background-color: #f8f9fa;
+        }
 
+        /* Top bar */
+        .topbar {
+            background-color: white;
+            border-bottom: 1px solid #a2a9b1;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            height: 50px;
+            margin-right: 15px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: normal;
+        }
+
+        /* Layout */
+        .container {
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 200px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #a2a9b1;
+            padding: 15px;
+            font-size: 14px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: #0645ad;
+            text-decoration: none;
+            margin: 5px 0;
+        }
+
+        .sidebar a:hover {
+            text-decoration: underline;
+        }
+
+        /* Main content */
+        .content {
+            flex: 1;
+            padding: 20px;
+            background-color: white;
+        }
+
+        h1 {
+            font-size: 28px;
+            border-bottom: 1px solid #a2a9b1;
+            font-weight: normal;
+        }
+
+        h2 {
+            border-bottom: 1px solid #a2a9b1;
+            font-weight: normal;
+        }
+
+        a {
+            color: #0645ad;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 12px;
+            color: #555;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="topbar">
+        <img src="articles/Logo.png" class="logo">
+        <div class="title">Jackipedia</div>
+    </div>
+
+    <div class="container">
+
+        <div class="sidebar">
+            <b>Navigation</b>
+            <a href="#">Main page</a>
+            <a href="#">Recent changes</a>
+            <a href="#">Random article</a>
+
+            <br>
+            <b>Contribute</b>
+            <a href="https://forms.gle/cVL9boDyKLyBcDH7A">Submit article</a>
+        </div>
+
+        <div class="content">
+
+            <h1>Welcome to Jackipedia</h1>
+            <p>The ultimate encyclopedia for anything 
+            <a href="https://www.youtube.com/@JackSucksAtLife">JackSucksAtLife</a> related.</p>
+
+            <h2>New articles</h2>
+            <ul>
+                <li><a href="https://the-ok.github.io/jackipedia/articles/jackandoscar.html">Jack & Oscar</a></li>
+                <li><a href="https://the-ok.github.io/jackipedia/articles/jackmw.html">JackMW</a></li>
+                <li><a href="https://the-ok.github.io/jackipedia/articles/jackmasseywelsh.html">Jack Massey Welsh</a></li>
+            </ul>
+
+            <h2>All articles (alphabetical)</h2>
+            <ul>
+                <li><a href="https://the-ok.github.io/jackipedia/articles/jackandoscar.html">Jack & Oscar</a></li>
+                <li><a href="https://the-ok.github.io/jackipedia/articles/jackmasseywelsh.html">Jack Massey Welsh</a></li>
+                <li><a href="https://the-ok.github.io/jackipedia/articles/jackmw.html">JackMW</a></li>
+                <li><a href="https://the-ok.github.io/jackipedia/articles/jacksucksatgeography.html">JackSucksAtGeography</a></li>
+                <li><a href="https://the-ok.github.io/jackipedia/articles/jacksucksatlife.html">JackSucksAtLife</a></li>
+                <li><a href="https://the-ok.github.io/jackipedia/articles/jacksucksatstuff.html">JackSucksAtStuff</a></li>
+            </ul>
+
+            <div class="footer">
+                <p>Version: like 0</p>
+                <p>Made by <a href="https://www.reddit.com/u/theok8234">u/theok8234</a></p>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
 </html>
-
-
-
-
-
-
-
-
-
-
