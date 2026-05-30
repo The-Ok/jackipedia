@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>JackGuessr</title>
+
+<link rel="stylesheet"
+href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+body{
+    overflow:hidden;
+    background:#111;
+}
+
+#streetview{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    border:none;
+}
+
+#topbar{
+    position:fixed;
+    top:15px;
+    left:15px;
+    z-index:1000;
+
+    background:rgba(0,0,0,.75);
+    color:white;
+
+    padding:12px 18px;
+    border-radius:12px;
+}
+
+#mapContainer{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+
+    width:320px;
+    height:220px;
+
+    border-radius:12px;
+    overflow:hidden;
+
+    box-shadow:0 0 25px rgba(0,0,0,.5);
+
+    z-index:1000;
+}
+
+#map{
+    width:100%;
+    height:100%;
+}
+
+#submit{
+    position:fixed;
+    bottom:250px;
+    right:20px;
+
+    padding:12px 24px;
+    font-size:18px;
+
+    border:none;
+    border-radius:10px;
+
+    background:#00b95d;
+    color:white;
+
+    cursor:pointer;
+    z-index:1000;
+}
+
+#next{
+    position:fixed;
+    bottom:250px;
+    right:150px;
+
+    padding:12px 24px;
+    font-size:18px;
+
+    border:none;
+    border-radius:10px;
+
+    background:#2979ff;
+    color:white;
+
+    cursor:pointer;
+    display:none;
+    z-index:1000;
+}
+
+#results{
+    position:fixed;
+    top:100px;
+    left:15px;
+
+    background:rgba(0,0,0,.8);
+    color:white;
+
+    padding:15px;
+    border-radius:12px;
+
+    z-index:1000;
+    display:none;
+}
+
+button:hover{
+    opacity:.9;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="topbar">
+    <h2>JackGuessr</h2>
+    Round: <span id="round">1</span><br>
+    Score: <span id="score">0</span>
+</div>
+
+<div id="results"></div>
+
+<iframe id="streetview"></iframe>
+
+<button id="submit">Guess</button>
+<button id="next">Next Round</button>
+
+<div id="mapContainer">
+    <div id="map"></div>
+</div>
+
+<script>
+
+// =========================
+// LOCATIONS
+// =========================
+
+const locations = [
+
+{
+url:"https://www.google.com/maps/embed?pb=!4v1780105109084!6m8!1m7!1smAg9Ak1IFhDX7Zc1n9WWGg!2m2!1d52.65543040790702!2d-0.7143612955331867!3f212.33548080087968!4f15.820985972954901!5f0.4000000000000002",
+lat:52.655430,
+lng:-0.714361
+},
+
+{
+url:"https://www.google.com/maps/embed?pb=!4v1780106839842!6m8!1m7!1s6h-xR2090bMk5RK9EQaXqA!2m2!1d54.6274860754401!2d-1.769840366501898!3f41.55796041066054!4f-4.732101801868765!5f0.7820865974627469",
+lat:54.627486,
+lng:-1.769840
+},
+
+{
+url:"https://www.google.com/maps/embed?pb=!4v1780107844759!6m8!1m7!1sR7ybmUdDrGXH5NioTQeJdA!2m2!1d8.309203985907383!2d-2.125921531110271!3f262.7477507742664!4f-33.821040191111315!5f0.7820865974627469",
+lat:8.309204,
+lng:-2.125922
+},
+
+{
+url:"https://www.google.com/maps/embed?pb=!4v1780112284198!6m8!1m7!1szzP1qmp9C83jXuFRZ1LmvQ!2m2!1d34.1364962696129!2d-118.3558679367327!3f346.3615205757657!4f0.11871997043525084!5f0.7820865974627469",
+lat:34.136522,
+lng:-118.355893
+},
+
+{
+url:"https://www.google.com/maps/embed?pb=!4v1780112965574!6m8!1m7!1sH90taWbhiyefIoVOK8N0LQ!2m2!1d52.65723902754749!2d-0.7057906522231395!3f292.5331540689567!4f-11.183131580484513!5f0.7820865974627469",
+lat:52.616209,
+lng:-0.705829
+}
+
+];
+
+// =========================
+// GAME VARIABLES
+// =========================
+
+let round = 0;
+let totalScore = 0;
+
+let guessedLatLng = null;
+
+let guessMarker = null;
+let answerMarker = null;
+let resultLine = null;
+
+// =========================
+// STREET VIEW
+// =========================
+
+const streetview =
+document.getElementById("streetview");
+
+function loadRound(){
+
+    const loc = locations[round];
+
+    streetview.src = loc.url;
+
+    document
+    .getElementById("round")
+    .textContent = round + 1;
+
+}
+
+loadRound();
+
+// =========================
+// MAP
+// =========================
+
+const map = L.map("map")
+.setView([20,0],2);
+
+L.tileLayer(
+"https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+{
+maxZoom:19,
+attribution:"© OpenStreetMap"
+}
+).addTo(map);
+
+map.on("click", function(e){
+
+    guessedLatLng = e.latlng;
+
+    if(guessMarker){
+        map.removeLayer(guessMarker);
+    }
+
+    guessMarker =
+    L.marker(e.latlng)
+    .addTo(map);
+
+});
+
+// =========================
+// DISTANCE FUNCTION
+// =========================
+
+function getDistance(lat1, lon1, lat2, lon2){
+
+    const R = 6371;
+
+    const dLat =
+    (lat2 - lat1) * Math.PI / 180;
+
+    const dLon =
+    (lon2 - lon1) * Math.PI / 180;
+
+    const a =
+        Math.sin(dLat/2) *
+        Math.sin(dLat/2) +
+
+        Math.cos(lat1*Math.PI/180) *
+        Math.cos(lat2*Math.PI/180) *
+
+        Math.sin(dLon/2) *
+        Math.sin(dLon/2);
+
+    const c =
+    2 * Math.atan2(
+        Math.sqrt(a),
+        Math.sqrt(1-a)
+    );
+
+    return R * c;
+}
+
+// =========================
+// SUBMIT GUESS
+// =========================
+
+document
+.getElementById("submit")
+.addEventListener("click", () => {
+
+    if(!guessedLatLng){
+        alert("Place a guess first!");
+        return;
+    }
+
+    const current =
+    locations[round];
+
+    answerMarker =
+    L.marker(
+        [current.lat,current.lng]
+    ).addTo(map);
+
+    resultLine =
+    L.polyline([
+        guessedLatLng,
+        [current.lat,current.lng]
+    ]).addTo(map);
+
+    map.fitBounds([
+        guessedLatLng,
+        [current.lat,current.lng]
+    ]);
+
+    const distance =
+    getDistance(
+        guessedLatLng.lat,
+        guessedLatLng.lng,
+        current.lat,
+        current.lng
+    );
+
+    const roundScore =
+    Math.max(
+        0,
+        Math.round(
+            5000 *
+            Math.exp(-distance/2000)
+        )
+    );
+
+    totalScore += roundScore;
+
+    document
+    .getElementById("score")
+    .textContent = totalScore;
+
+    document
+    .getElementById("results")
+    .style.display = "block";
+
+    document
+    .getElementById("results")
+    .innerHTML = `
+        <h3>Round Results</h3>
+        Distance: ${distance.toFixed(0)} km<br>
+        Round Score: ${roundScore}<br>
+        Total Score: ${totalScore}
+    `;
+
+    document
+    .getElementById("submit")
+    .style.display = "none";
+
+    document
+    .getElementById("next")
+    .style.display = "block";
+
+});
+
+// =========================
+// NEXT ROUND
+// =========================
+
+document
+.getElementById("next")
+.addEventListener("click", () => {
+
+    if(guessMarker)
+        map.removeLayer(guessMarker);
+
+    if(answerMarker)
+        map.removeLayer(answerMarker);
+
+    if(resultLine)
+        map.removeLayer(resultLine);
+
+    guessedLatLng = null;
+
+    round++;
+
+    if(round >= locations.length){
+
+        alert(
+            "Game Over!\n\n" +
+            "Final Score: " +
+            totalScore
+        );
+
+        round = 0;
+        totalScore = 0;
+
+        document
+        .getElementById("score")
+        .textContent = 0;
+    }
+
+    map.setView([20,0],2);
+
+    loadRound();
+
+    document
+    .getElementById("results")
+    .style.display = "none";
+
+    document
+    .getElementById("submit")
+    .style.display = "block";
+
+    document
+    .getElementById("next")
+    .style.display = "none";
+
+});
+
+</script>
+
+</body>
+</html>
