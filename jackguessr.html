@@ -61,8 +61,8 @@ body{
 }
 
 #mapContainer:hover{
-     width:470px;
-    height:370px; 
+     width:420px;
+    height:320px; 
 }
 
 #map{
@@ -141,12 +141,13 @@ button:hover{
 
 <iframe id="streetview"></iframe>
 
-<button id="submit">Guess</button>
-<button id="next">Next Round</button>
 
 <div id="mapContainer">
     <div id="map"></div>
 </div>
+
+<button id="submit">Guess</button>
+<button id="next">Next Round</button>
 
 <script>
 
@@ -155,7 +156,6 @@ button:hover{
 // =========================
 
 const locations = [
-
 {
 url:"https://www.google.com/maps/embed?pb=!4v1780105109084!6m8!1m7!1smAg9Ak1IFhDX7Zc1n9WWGg!2m2!1d52.65543040790702!2d-0.7143612955331867!3f212.33548080087968!4f15.820985972954901!5f0.4000000000000002",
 lat:52.655430,
@@ -196,8 +196,13 @@ lng:-2.238032
 url:"https://www.google.com/maps/embed?pb=!4v1780261632864!6m8!1m7!1s8aNEaPCjEbjKMW8IY6lBJg!2m2!1d53.3155888223546!2d-1.132376947882608!3f243.54851833987198!4f5.215602564068206!5f0.7820865974627469",
 lat:53.315620,
 lng:-1.132571
-}
+},
 
+{
+url:"https://www.google.com/maps/embed?pb=!4v1780262929352!6m8!1m7!1sDqPx1kyooZUi2SnqIZBzVA!2m2!1d53.38163748528568!2d-1.426091656465277!3f216.79447281466133!4f1.1799489240324164!5f0.7820865974627469",
+lat:53.381595,
+lng:-1.426033
+}
 ];
 
 // =========================
@@ -208,59 +213,58 @@ let round = 0;
 let totalScore = 0;
 
 let guessedLatLng = null;
-
 let guessMarker = null;
 let answerMarker = null;
 let resultLine = null;
+
+// Create a shuffled list of 5 random locations
+let gameRounds = [];
+
+function startNewGame() {
+    totalScore = 0;
+    round = 0;
+
+    // Shuffle and pick 5
+    gameRounds = [...locations]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 5);
+
+    document.getElementById("score").textContent = 0;
+    loadRound();
+}
 
 // =========================
 // STREET VIEW
 // =========================
 
-const streetview =
-document.getElementById("streetview");
+const streetview = document.getElementById("streetview");
 
-function loadRound(){
-
-    const loc = locations[round];
-
+function loadRound() {
+    const loc = gameRounds[round];
     streetview.src = loc.url;
 
-    document
-    .getElementById("round")
-    .textContent = round + 1;
-
+    document.getElementById("round").textContent = round + 1;
 }
 
-loadRound();
+startNewGame();
 
 // =========================
 // MAP
 // =========================
 
-const map = L.map("map")
-.setView([20,0],2);
+const map = L.map("map").setView([20,0],2);
 
-L.tileLayer(
-"https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-{
-maxZoom:19,
-attribution:"© OpenStreetMap"
-}
-).addTo(map);
+L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom:19,
+    attribution:"© OpenStreetMap"
+}).addTo(map);
 
 map.on("click", function(e){
-
     guessedLatLng = e.latlng;
 
-    if(guessMarker){
-        map.removeLayer(guessMarker);
-    }
+    if(guessMarker) map.removeLayer(guessMarker);
 
-    guessMarker =
-    L.marker(e.latlng)
-    .addTo(map);
-
+    guessMarker = L.marker(e.latlng).addTo(map);
 });
 
 // =========================
@@ -268,168 +272,98 @@ map.on("click", function(e){
 // =========================
 
 function getDistance(lat1, lon1, lat2, lon2){
-
     const R = 6371;
-
-    const dLat =
-    (lat2 - lat1) * Math.PI / 180;
-
-    const dLon =
-    (lon2 - lon1) * Math.PI / 180;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
 
     const a =
-        Math.sin(dLat/2) *
-        Math.sin(dLat/2) +
-
+        Math.sin(dLat/2)**2 +
         Math.cos(lat1*Math.PI/180) *
         Math.cos(lat2*Math.PI/180) *
+        Math.sin(dLon/2)**2;
 
-        Math.sin(dLon/2) *
-        Math.sin(dLon/2);
-
-    const c =
-    2 * Math.atan2(
-        Math.sqrt(a),
-        Math.sqrt(1-a)
-    );
-
-    return R * c;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
 // =========================
 // SUBMIT GUESS
 // =========================
 
-document
-.getElementById("submit")
-.addEventListener("click", () => {
+document.getElementById("submit").addEventListener("click", () => {
 
     if(!guessedLatLng){
         alert("Place a guess first!");
         return;
     }
 
-    const current =
-    locations[round];
+    const current = gameRounds[round];
 
-    answerMarker =
-    L.marker(
-        [current.lat,current.lng]
-    ).addTo(map);
+    answerMarker = L.marker([current.lat,current.lng]).addTo(map);
 
-    resultLine =
-    L.polyline([
-        guessedLatLng,
-        [current.lat,current.lng]
-    ]).addTo(map);
+    resultLine = L.polyline([guessedLatLng, [current.lat,current.lng]]).addTo(map);
 
-    map.fitBounds([
-        guessedLatLng,
-        [current.lat,current.lng]
-    ]);
+    map.fitBounds([guessedLatLng, [current.lat,current.lng]]);
 
-    const distance =
-    getDistance(
-        guessedLatLng.lat,
-        guessedLatLng.lng,
-        current.lat,
-        current.lng
+    const distance = getDistance(
+        guessedLatLng.lat, guessedLatLng.lng,
+        current.lat, current.lng
     );
 
-    const roundScore =
-    Math.max(
+    const roundScore = Math.max(
         0,
-        Math.round(
-            5000 *
-            Math.exp(-distance/2000)
-        )
+        Math.round(5000 * Math.exp(-distance/2000))
     );
 
     totalScore += roundScore;
 
-    document
-    .getElementById("score")
-    .textContent = totalScore;
+    document.getElementById("score").textContent = totalScore;
 
-    document
-    .getElementById("results")
-    .style.display = "block";
-
-    document
-    .getElementById("results")
-    .innerHTML = `
+    document.getElementById("results").style.display = "block";
+    document.getElementById("results").innerHTML = `
         <h3>Round Results</h3>
         Distance: ${distance.toFixed(0)} km<br>
         Round Score: ${roundScore}<br>
         Total Score: ${totalScore}
     `;
 
-    document
-    .getElementById("submit")
-    .style.display = "none";
-
-    document
-    .getElementById("next")
-    .style.display = "block";
-
+    document.getElementById("submit").style.display = "none";
+    document.getElementById("next").style.display = "block";
 });
 
 // =========================
 // NEXT ROUND
 // =========================
 
-document
-.getElementById("next")
-.addEventListener("click", () => {
+document.getElementById("next").addEventListener("click", () => {
 
-    if(guessMarker)
-        map.removeLayer(guessMarker);
-
-    if(answerMarker)
-        map.removeLayer(answerMarker);
-
-    if(resultLine)
-        map.removeLayer(resultLine);
+    if(guessMarker) map.removeLayer(guessMarker);
+    if(answerMarker) map.removeLayer(answerMarker);
+    if(resultLine) map.removeLayer(resultLine);
 
     guessedLatLng = null;
 
     round++;
 
-    if(round >= locations.length){
-
-        alert(
-            "Game Over!\n\n" +
-            "Final Score: " +
-            totalScore
-        );
-
-        round = 0;
-        totalScore = 0;
-
-        document
-        .getElementById("score")
-        .textContent = 0;
+    if(round >= 5){
+        alert("Game Over!\n\nFinal Score: " + totalScore);
+        startNewGame();
+        map.setView([20,0],2);
+        document.getElementById("results").style.display = "none";
+        document.getElementById("submit").style.display = "block";
+        document.getElementById("next").style.display = "none";
+        return;
     }
 
     map.setView([20,0],2);
-
     loadRound();
 
-    document
-    .getElementById("results")
-    .style.display = "none";
-
-    document
-    .getElementById("submit")
-    .style.display = "block";
-
-    document
-    .getElementById("next")
-    .style.display = "none";
-
+    document.getElementById("results").style.display = "none";
+    document.getElementById("submit").style.display = "block";
+    document.getElementById("next").style.display = "none";
 });
 
 </script>
+
 
 </body>
 </html>
