@@ -89,6 +89,24 @@ body{
     z-index:1000;
 }
 
+#submit2{
+    position:fixed;
+    bottom:200px;
+    right:20px;
+
+    padding:12px 24px;
+    font-size:18px;
+
+    border:none;
+    border-radius:10px;
+
+    background:#00b95d;
+    color:white;
+
+    cursor:pointer;
+    z-index:1000;
+}
+
 #next{
     position:fixed;
     bottom:250px;
@@ -152,10 +170,14 @@ a{
 <h3><a href="000001.html">     View official trailer</a></h3>
 
 <button id="submit" onclick="playee()">Play</button>
+<button id="submit2" onclick="NMPZZ()">NMPZ</button>
 
  <script>
     function playee() {
         location.href = "play.html";
+    }
+    function NMPZZ() {
+        location.href = "nmpz.html";
     }
 
     
