@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>High Quality Post Maker</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Inter,Segoe UI,sans-serif;
+    background:linear-gradient(135deg,#1f2937,#111827);
+    color:white;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:40px;
+}
+
+.container{
+    width:1100px;
+    max-width:95%;
+    display:grid;
+    grid-template-columns:550px 1fr;
+    gap:35px;
+}
+
+.preview{
+    background:#1e293b;
+    border-radius:20px;
+    padding:25px;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+}
+
+.controls{
+    background:rgba(255,255,255,.08);
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.1);
+    border-radius:20px;
+    padding:30px;
+    box-shadow:0 20px 60px rgba(0,0,0,.35);
+}
+
+h1{
+    margin-bottom:20px;
+    font-size:30px;
+}
+
+canvas{
+    width:100%;
+    border-radius:18px;
+    border:none;
+    box-shadow:0 15px 40px rgba(0,0,0,.4);
+    background:#222;
+}
+
+label{
+    display:block;
+    margin-top:18px;
+    font-size:14px;
+    font-weight:600;
+}
+
+input[type=text]{
+    width:100%;
+    margin-top:8px;
+    padding:12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,.15);
+    background:#0f172a;
+    color:white;
+    font-size:15px;
+}
+
+input[type=file]{
+    width:100%;
+    margin-top:8px;
+    padding:10px;
+    border-radius:12px;
+    background:#0f172a;
+    color:white;
+}
+
+input[type=color]{
+    width:70px;
+    height:45px;
+    border:none;
+    border-radius:12px;
+    background:none;
+    margin-top:8px;
+    cursor:pointer;
+}
+
+button{
+    margin-top:30px;
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:14px;
+    background:linear-gradient(90deg,#3b82f6,#2563eb);
+    color:white;
+    font-size:17px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.25s;
+}
+
+button:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 25px rgba(37,99,235,.45);
+}
+
+@media(max-width:900px){
+
+.container{
+    grid-template-columns:1fr;
+}
+
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="preview">
+        <canvas id="canvas" width="500" height="250"></canvas>
+    </div>
+
+    <div class="controls">
+
+        <h1>r/JackSucksAtLife High Quality Post Creator</h1>
+        <h2>By u/theok8234</h2>
+
+        <label>
+        Background:
+        <input type="file" id="background" accept="image/*">
+        </label>
+
+        <label>
+        Background Color:
+        <input type="color" id="bgColor" value="#7fffd4">
+        </label>
+
+        <label>
+        Text Color:
+        <input type="color" id="textColor" value="#ffffff">
+        </label>
+
+        <label>
+        Profile Picture:
+        <input type="file" id="pfp" accept="image/*">
+        </label>
+
+        <label>
+        Title:
+        <input type="text" id="title" placeholder="Title">
+        </label>
+
+        <label>
+        Extra Text:
+        <input type="text" id="extra" placeholder="Extra text">
+        </label>
+
+        <label>
+        Image:
+        <input type="file" id="image" accept="image/*">
+        </label>
+
+
+        <button id="download">Download PNG</button>
+
+    </div>
+
+</div>
+
+</body>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let backgroundImg = null;
+let pfpImg = null;
+let postImg = null;
+
+function loadImage(input, callback){
+    const file = input.files[0];
+    if(!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+        const img = new Image();
+
+        img.onload = function(){
+            callback(img);
+            drawCanvas();
+        };
+
+        img.src = e.target.result;
+    };
+
+    reader.readAsDataURL(file);
+}
+
+document.getElementById("background").addEventListener("change", function(){
+    loadImage(this, img => backgroundImg = img);
+});
+
+document.getElementById("pfp").addEventListener("change", function(){
+    loadImage(this, img => pfpImg = img);
+});
+
+document.getElementById("image").addEventListener("change", function(){
+    loadImage(this, img => postImg = img);
+});
+
+document.getElementById("title").addEventListener("input", drawCanvas);
+document.getElementById("extra").addEventListener("input", drawCanvas);
+document.getElementById("bgColor").addEventListener("input", drawCanvas);
+document.getElementById("textColor").addEventListener("input", drawCanvas);
+
+function drawCanvas(){
+
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+
+    // Background
+    if(backgroundImg){
+        ctx.drawImage(backgroundImg,0,0,canvas.width,canvas.height);
+    }else{
+        ctx.fillStyle = document.getElementById("bgColor").value;
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
+
+    // Dark overlay for readability
+    ctx.fillStyle="rgba(0,0,0,0.25)";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // Title
+    const title = document.getElementById("title").value;
+
+    ctx.fillStyle = document.getElementById("textColor").value;
+    ctx.font="bold 28px Arial";
+    ctx.textAlign="center";
+    ctx.fillText(title, canvas.width/2, 40);
+
+    // Extra text
+    const extra = document.getElementById("extra").value;
+
+    ctx.font="16px Arial";
+    ctx.fillText(extra, canvas.width/2, 68);
+
+    // Main image
+    if(postImg){
+        ctx.drawImage(postImg,150,80,200,120);
+    }
+
+    // PFP
+    if(pfpImg){
+        ctx.drawImage(pfpImg,10,190,50,50);
+    }
+}
+
+drawCanvas();
+
+document.getElementById("download").addEventListener("click", function(){
+
+    const link = document.createElement("a");
+    link.download = "post.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+
+});
+</script>
+
+</body>
+</html>
