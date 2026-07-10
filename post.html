@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>High Quality Post Maker</title>
+<title>High Quality Post Maker + Slideshow</title>
 
 <style>
 *{
@@ -23,10 +23,10 @@ body{
 }
 
 .container{
-    width:1100px;
+    width:1200px;
     max-width:95%;
     display:grid;
-    grid-template-columns:550px 1fr;
+    grid-template-columns:600px 1fr;
     gap:35px;
 }
 
@@ -44,11 +44,19 @@ body{
     border-radius:20px;
     padding:30px;
     box-shadow:0 20px 60px rgba(0,0,0,.35);
+    overflow-y:auto;
+    max-height:90vh;
 }
 
 h1{
+    margin-bottom:10px;
+    font-size:28px;
+}
+
+h2{
     margin-bottom:20px;
-    font-size:30px;
+    font-size:16px;
+    opacity:.7;
 }
 
 canvas{
@@ -66,7 +74,7 @@ label{
     font-weight:600;
 }
 
-input[type=text]{
+input[type=text], input[type=range]{
     width:100%;
     margin-top:8px;
     padding:12px;
@@ -97,7 +105,7 @@ input[type=color]{
 }
 
 button{
-    margin-top:30px;
+    margin-top:20px;
     width:100%;
     padding:15px;
     border:none;
@@ -115,12 +123,47 @@ button:hover{
     box-shadow:0 10px 25px rgba(37,99,235,.45);
 }
 
-@media(max-width:900px){
-
-.container{
-    grid-template-columns:1fr;
+.slides {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255,255,255,.2);
 }
 
+.slide-item {
+    padding:10px;
+    background:#0f172a;
+    border-radius:10px;
+    margin-bottom:10px;
+    cursor:pointer;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.slide-item.active {
+    background:#1e293b;
+    border:1px solid #3b82f6;
+}
+
+.slide-item button {
+    background:#ef4444;
+    padding:5px 10px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+
+.toggle{
+    margin-top:10px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+@media(max-width:900px){
+    .container{
+        grid-template-columns:1fr;
+    }
 }
 </style>
 </head>
@@ -129,49 +172,77 @@ button:hover{
 <div class="container">
 
     <div class="preview">
-        <canvas id="canvas" width="500" height="250"></canvas>
+        <canvas id="canvas" width="640" height="360"></canvas>
     </div>
 
     <div class="controls">
 
-        <h1>r/JackSucksAtLife High Quality Post Creator</h1>
+        <h1>r/JackSucksAtLife high Quality Post Creator</h1>
         <h2>By u/theok8234</h2>
 
-        <label>
-        Background:
-        <input type="file" id="background" accept="image/*">
+        <div class="slides">
+            <h2>Slides</h2>
+            <div id="slideList"></div>
+            <button id="addSlide">Add Slide</button>
+            <button id="downloadAll">Download All Slides</button>
+        </div>
+
+        <label>Background Image:
+            <input type="file" id="background" accept="image/*">
         </label>
 
-        <label>
-        Background Color:
-        <input type="color" id="bgColor" value="#7fffd4">
+        <label>Background Color:
+            <input type="color" id="bgColor" value="#7fffd4">
         </label>
 
-        <label>
-        Text Color:
-        <input type="color" id="textColor" value="#ffffff">
+        <label>Text Color:
+            <input type="color" id="textColor" value="#ffffff">
         </label>
 
-        <label>
-        Profile Picture:
-        <input type="file" id="pfp" accept="image/*">
+        <label>Profile Picture:
+            <input type="file" id="pfp" accept="image/*">
         </label>
 
-        <label>
-        Title:
-        <input type="text" id="title" placeholder="Title">
+        <label>Profile Picture Size:
+            <input type="range" id="pfpSize" min="20" max="120" value="60">
         </label>
 
-        <label>
-        Extra Text:
-        <input type="text" id="extra" placeholder="Extra text">
+        <label>Title:
+            <input type="text" id="title" placeholder="Title">
         </label>
 
-        <label>
-        Image:
-        <input type="file" id="image" accept="image/*">
+        <label>Title Size:
+            <input type="range" id="titleSize" min="18" max="48" value="30">
         </label>
 
+        <label>Extra Text:
+            <input type="text" id="extra" placeholder="Extra text">
+        </label>
+
+        <label>Extra Text Size:
+            <input type="range" id="extraSize" min="12" max="32" value="18">
+        </label>
+
+        <label>Main Image:
+            <input type="file" id="image" accept="image/*">
+        </label>
+
+        <label>Main Image Size (Zoom %):
+            <input type="range" id="imgSize" min="10" max="300" value="100">
+        </label>
+
+        <label>Main Image X Position:
+            <input type="range" id="imgX" min="0" max="600" value="200">
+        </label>
+
+        <label>Main Image Y Position:
+            <input type="range" id="imgY" min="0" max="300" value="100">
+        </label>
+
+        <div class="toggle">
+            <input type="checkbox" id="shadow" checked>
+            <span>Enable Drop Shadow</span>
+        </div>
 
         <button id="download">Download PNG</button>
 
@@ -179,104 +250,227 @@ button:hover{
 
 </div>
 
-</body>
-
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-let backgroundImg = null;
-let pfpImg = null;
-let postImg = null;
+let slides = [];
+let currentSlide = 0;
+
+function createNewSlide() {
+    return {
+        backgroundImg: null,
+        pfpImg: null,
+        postImg: null,
+        title: "",
+        extra: "",
+        bgColor: "#7fffd4",
+        textColor: "#ffffff",
+        titleSize: 30,
+        extraSize: 18,
+        pfpSize: 60,
+        imgSize: 100, // zoom percentage
+        imgX: 200,
+        imgY: 100,
+        shadow: true
+    };
+}
+
+slides.push(createNewSlide());
 
 function loadImage(input, callback){
     const file = input.files[0];
     if(!file) return;
 
     const reader = new FileReader();
-
-    reader.onload = function(e){
+    reader.onload = e => {
         const img = new Image();
-
-        img.onload = function(){
+        img.onload = () => {
             callback(img);
             drawCanvas();
         };
-
         img.src = e.target.result;
     };
-
     reader.readAsDataURL(file);
 }
 
 document.getElementById("background").addEventListener("change", function(){
-    loadImage(this, img => backgroundImg = img);
+    loadImage(this, img => slides[currentSlide].backgroundImg = img);
 });
-
 document.getElementById("pfp").addEventListener("change", function(){
-    loadImage(this, img => pfpImg = img);
+    loadImage(this, img => slides[currentSlide].pfpImg = img);
 });
-
 document.getElementById("image").addEventListener("change", function(){
-    loadImage(this, img => postImg = img);
+    loadImage(this, img => slides[currentSlide].postImg = img);
 });
 
-document.getElementById("title").addEventListener("input", drawCanvas);
-document.getElementById("extra").addEventListener("input", drawCanvas);
-document.getElementById("bgColor").addEventListener("input", drawCanvas);
-document.getElementById("textColor").addEventListener("input", drawCanvas);
+[
+"title","extra","bgColor","textColor",
+"titleSize","extraSize","pfpSize",
+"imgSize","imgX","imgY","shadow"
+].forEach(id => {
+    document.getElementById(id).addEventListener("input", () => {
+        const s = slides[currentSlide];
+        s.title = document.getElementById("title").value;
+        s.extra = document.getElementById("extra").value;
+        s.bgColor = document.getElementById("bgColor").value;
+        s.textColor = document.getElementById("textColor").value;
+        s.titleSize = document.getElementById("titleSize").value;
+        s.extraSize = document.getElementById("extraSize").value;
+        s.pfpSize = document.getElementById("pfpSize").value;
+        s.imgSize = document.getElementById("imgSize").value;
+        s.imgX = document.getElementById("imgX").value;
+        s.imgY = document.getElementById("imgY").value;
+        s.shadow = document.getElementById("shadow").checked;
+        drawCanvas();
+    });
+});
+
+function wrapText(text, x, y, maxWidth, lineHeight){
+    const words = text.split(" ");
+    let line = "";
+
+    for(let n=0; n<words.length; n++){
+        const testLine = line + words[n] + " ";
+        const metrics = ctx.measureText(testLine);
+        if(metrics.width > maxWidth){
+            ctx.fillText(line, x, y);
+            line = words[n] + " ";
+            y += lineHeight;
+        } else {
+            line = testLine;
+        }
+    }
+    ctx.fillText(line, x, y);
+}
 
 function drawCanvas(){
+    const s = slides[currentSlide];
 
     ctx.clearRect(0,0,canvas.width,canvas.height);
 
-    // Background
-    if(backgroundImg){
-        ctx.drawImage(backgroundImg,0,0,canvas.width,canvas.height);
-    }else{
-        ctx.fillStyle = document.getElementById("bgColor").value;
+    if(s.backgroundImg){
+        ctx.drawImage(s.backgroundImg,0,0,canvas.width,canvas.height);
+    } else {
+        ctx.fillStyle = s.bgColor;
         ctx.fillRect(0,0,canvas.width,canvas.height);
     }
 
-    // Dark overlay for readability
-    ctx.fillStyle="rgba(0,0,0,0.25)";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = s.textColor;
 
-    // Title
-    const title = document.getElementById("title").value;
-
-    ctx.fillStyle = document.getElementById("textColor").value;
-    ctx.font="bold 28px Arial";
+    ctx.font = `bold ${s.titleSize}px Arial`;
     ctx.textAlign="center";
-    ctx.fillText(title, canvas.width/2, 40);
+    wrapText(s.title, canvas.width/2, 40, 550, 32);
 
-    // Extra text
-    const extra = document.getElementById("extra").value;
+    ctx.font = `${s.extraSize}px Arial`;
+    wrapText(s.extra, canvas.width/2, 90, 550, 26);
 
-    ctx.font="16px Arial";
-    ctx.fillText(extra, canvas.width/2, 68);
+    if(s.postImg){
+        if(s.shadow){
+            ctx.shadowColor="rgba(0,0,0,0.5)";
+            ctx.shadowBlur=20;
+        } else ctx.shadowBlur=0;
 
-    // Main image
-    if(postImg){
-        ctx.drawImage(postImg,150,80,200,120);
+        const naturalWidth = s.postImg.naturalWidth;
+        const naturalHeight = s.postImg.naturalHeight;
+
+        const scale = s.imgSize / 100;
+
+        ctx.drawImage(
+            s.postImg,
+            s.imgX,
+            s.imgY,
+            naturalWidth * scale,
+            naturalHeight * scale
+        );
+
+        ctx.shadowBlur=0;
     }
 
-    // PFP
-    if(pfpImg){
-        ctx.drawImage(pfpImg,10,190,50,50);
+    if(s.pfpImg){
+        ctx.drawImage(s.pfpImg, 20, canvas.height-s.pfpSize-20, s.pfpSize, s.pfpSize);
     }
 }
 
-drawCanvas();
+function refreshSlideList(){
+    const list = document.getElementById("slideList");
+    list.innerHTML = "";
+
+    slides.forEach((slide, index) => {
+        const item = document.createElement("div");
+        item.className = "slide-item" + (index === currentSlide ? " active" : "");
+        item.innerHTML = `
+            <span>Slide ${index+1}</span>
+            <button onclick="deleteSlide(${index})">X</button>
+        `;
+        item.onclick = () => {
+            currentSlide = index;
+            loadSlideIntoUI();
+            drawCanvas();
+            refreshSlideList();
+        };
+        list.appendChild(item);
+    });
+}
+
+function deleteSlide(index){
+    if(slides.length === 1) return;
+    slides.splice(index,1);
+    if(currentSlide >= slides.length) currentSlide = slides.length-1;
+    loadSlideIntoUI();
+    refreshSlideList();
+    drawCanvas();
+}
+
+document.getElementById("addSlide").onclick = () => {
+    slides.push(createNewSlide());
+    currentSlide = slides.length - 1;
+    loadSlideIntoUI();
+    refreshSlideList();
+    drawCanvas();
+};
+
+function loadSlideIntoUI(){
+    const s = slides[currentSlide];
+
+    document.getElementById("title").value = s.title;
+    document.getElementById("extra").value = s.extra;
+    document.getElementById("bgColor").value = s.bgColor;
+    document.getElementById("textColor").value = s.textColor;
+    document.getElementById("titleSize").value = s.titleSize;
+    document.getElementById("extraSize").value = s.extraSize;
+    document.getElementById("pfpSize").value = s.pfpSize;
+    document.getElementById("imgSize").value = s.imgSize;
+    document.getElementById("imgX").value = s.imgX;
+    document.getElementById("imgY").value = s.imgY;
+    document.getElementById("shadow").checked = s.shadow;
+}
+
+document.getElementById("downloadAll").onclick = () => {
+    slides.forEach((slide, index) => {
+        currentSlide = index;
+        drawCanvas();
+
+        const link = document.createElement("a");
+        link.download = `slide_${index+1}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    });
+
+    currentSlide = slides.length - 1;
+    drawCanvas();
+};
 
 document.getElementById("download").addEventListener("click", function(){
-
+    drawCanvas();
     const link = document.createElement("a");
     link.download = "post.png";
     link.href = canvas.toDataURL("image/png");
     link.click();
-
 });
+
+refreshSlideList();
+drawCanvas();
 </script>
 
 </body>
